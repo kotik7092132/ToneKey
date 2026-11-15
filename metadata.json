@@ -1,0 +1,6 @@
+{
+  "name": "ToneKey",
+  "description": "Клавиатура в стиле Material You с динамическими цветами и тонкой настройкой геометрии, раскладки и тактильного отклика.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
