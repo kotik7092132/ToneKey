@@ -1,0 +1,392 @@
+package com.example
+
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.provider.Settings
+import android.view.inputmethod.InputMethodManager
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AspectRatio
+import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.rounded.AspectRatio
+import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Keyboard
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.model.OneHandedMode
+import com.example.ui.studio.GeometryTab
+import com.example.ui.studio.LiveSandboxPreviewCard
+import com.example.ui.studio.PaletteStyleTab
+import com.example.ui.studio.StudioHomeTab
+import com.example.ui.studio.StudioTab
+import com.example.ui.studio.StudioViewModel
+import com.example.ui.studio.TypingHapticsTab
+import com.example.ui.theme.ToneKeyTheme
+
+class MainActivity : ComponentActivity() {
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    enableEdgeToEdge()
+    setContent {
+      ToneKeyStudioRoot()
+    }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ToneKeyStudioRoot(
+  viewModel: StudioViewModel = viewModel(),
+) {
+  val context = LocalContext.current
+  val settings by viewModel.settings.collectAsStateWithLifecycle()
+  val imeStatus by viewModel.imeStatus.collectAsStateWithLifecycle()
+  val activeTab by viewModel.activeTab.collectAsStateWithLifecycle()
+  val previewLanguage by viewModel.previewLanguage.collectAsStateWithLifecycle()
+  val sandboxText by viewModel.sandboxText.collectAsStateWithLifecycle()
+  val isLivePreviewExpanded by viewModel.isLivePreviewExpanded.collectAsStateWithLifecycle()
+
+  LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+    viewModel.refreshImeStatus()
+  }
+
+  BackHandler(enabled = activeTab != StudioTab.STUDIO) {
+    viewModel.selectTab(StudioTab.STUDIO)
+  }
+
+  val openImeSettings = {
+    runCatching {
+      context.startActivity(
+        Intent(Settings.ACTION_INPUT_METHOD_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+      )
+    }
+    Unit
+  }
+
+  val openImePicker = {
+    val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+    imm?.showInputMethodPicker()
+    Unit
+  }
+
+  val toggleOneHanded = {
+    val next =
+      if (settings.oneHandedMode == OneHandedMode.OFF) {
+        OneHandedMode.RIGHT
+      } else {
+        OneHandedMode.OFF
+      }
+    viewModel.setOneHandedMode(next)
+  }
+
+  val swapOneHandedSide = {
+    val next =
+      if (settings.oneHandedMode == OneHandedMode.RIGHT) {
+        OneHandedMode.LEFT
+      } else {
+        OneHandedMode.RIGHT
+      }
+    viewModel.setOneHandedMode(next)
+  }
+
+  ToneKeyTheme(settings = settings) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+      val isWideScreen = maxWidth >= 680.dp
+
+      if (isWideScreen) {
+        Scaffold(
+          containerColor = MaterialTheme.colorScheme.background,
+          contentWindowInsets = WindowInsets.safeDrawing,
+        ) { innerPadding ->
+          Row(
+            modifier = Modifier
+              .fillMaxSize()
+              .padding(innerPadding),
+          ) {
+            NavigationRail(
+              containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ) {
+              StudioTab.entries.forEach { tab ->
+                val selected = activeTab == tab
+                NavigationRailItem(
+                  selected = selected,
+                  onClick = { viewModel.selectTab(tab) },
+                  icon = {
+                    Icon(
+                      imageVector = tabIcon(tab, selected),
+                      contentDescription = tab.title,
+                    )
+                  },
+                  label = { Text(tab.title) },
+                  modifier = Modifier.testTag("nav_${tab.name.lowercase()}"),
+                )
+              }
+            }
+
+            Row(
+              modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+              horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+              Box(
+                modifier = Modifier
+                  .weight(1.05f)
+                  .fillMaxHeight(),
+              ) {
+                TabContentHost(
+                  activeTab = activeTab,
+                  settings = settings,
+                  imeStatus = imeStatus,
+                  sandboxText = sandboxText,
+                  previewLanguage = previewLanguage,
+                  showInlinePreview = false,
+                  viewModel = viewModel,
+                  onOpenImeSettings = openImeSettings,
+                  onOpenImePicker = openImePicker,
+                  onToggleOneHanded = toggleOneHanded,
+                  onSwapOneHandedSide = swapOneHandedSide,
+                )
+              }
+
+              Column(
+                modifier = Modifier
+                  .weight(0.95f)
+                  .fillMaxHeight(),
+                verticalArrangement = Arrangement.Center,
+              ) {
+                LiveSandboxPreviewCard(
+                  settings = settings,
+                  sandboxText = sandboxText,
+                  onSandboxTextChange = viewModel::updateSandboxText,
+                  onClearSandbox = viewModel::clearSandbox,
+                  sink = viewModel.sandboxSink,
+                  activeLanguage = previewLanguage,
+                  onLanguageChange = viewModel::setPreviewLanguage,
+                  onToggleOneHanded = toggleOneHanded,
+                  onSwapOneHandedSide = swapOneHandedSide,
+                  showTextInput = true,
+                  isExpanded = true,
+                  onOpenSettingsTab = { viewModel.selectTab(StudioTab.PALETTE) },
+                )
+              }
+            }
+          }
+        }
+      } else {
+        Scaffold(
+          containerColor = MaterialTheme.colorScheme.background,
+          topBar = {
+            CenterAlignedTopAppBar(
+              title = {
+                Text(
+                  text = if (activeTab == StudioTab.STUDIO) "ToneKey" else activeTab.title,
+                  style = MaterialTheme.typography.titleLarge,
+                )
+              },
+              colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = MaterialTheme.colorScheme.background,
+              ),
+            )
+          },
+          bottomBar = {
+            NavigationBar(
+              windowInsets = WindowInsets.navigationBars,
+              containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ) {
+              StudioTab.entries.forEach { tab ->
+                val selected = activeTab == tab
+                NavigationBarItem(
+                  selected = selected,
+                  onClick = { viewModel.selectTab(tab) },
+                  icon = {
+                    Icon(
+                      imageVector = tabIcon(tab, selected),
+                      contentDescription = tab.title,
+                    )
+                  },
+                  label = { Text(tab.title) },
+                  modifier = Modifier.testTag("nav_${tab.name.lowercase()}"),
+                )
+              }
+            }
+          },
+        ) { innerPadding ->
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .padding(innerPadding),
+            contentAlignment = Alignment.TopCenter,
+          ) {
+            Column(
+              modifier = Modifier
+                .fillMaxSize()
+                .widthIn(max = 600.dp),
+            ) {
+              if (activeTab == StudioTab.PALETTE || activeTab == StudioTab.GEOMETRY) {
+                LiveSandboxPreviewCard(
+                  settings = settings,
+                  sandboxText = sandboxText,
+                  onSandboxTextChange = viewModel::updateSandboxText,
+                  onClearSandbox = viewModel::clearSandbox,
+                  sink = viewModel.sandboxSink,
+                  activeLanguage = previewLanguage,
+                  onLanguageChange = viewModel::setPreviewLanguage,
+                  onToggleOneHanded = toggleOneHanded,
+                  onSwapOneHandedSide = swapOneHandedSide,
+                  showTextInput = false,
+                  isExpanded = isLivePreviewExpanded,
+                  onToggleExpanded = viewModel::toggleLivePreviewExpanded,
+                  modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                )
+              }
+
+              Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                TabContentHost(
+                  activeTab = activeTab,
+                  settings = settings,
+                  imeStatus = imeStatus,
+                  sandboxText = sandboxText,
+                  previewLanguage = previewLanguage,
+                  showInlinePreview = true,
+                  viewModel = viewModel,
+                  onOpenImeSettings = openImeSettings,
+                  onOpenImePicker = openImePicker,
+                  onToggleOneHanded = toggleOneHanded,
+                  onSwapOneHandedSide = swapOneHandedSide,
+                )
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun TabContentHost(
+  activeTab: StudioTab,
+  settings: com.example.model.KeyboardSettings,
+  imeStatus: com.example.ui.studio.ImeActivationStatus,
+  sandboxText: androidx.compose.ui.text.input.TextFieldValue,
+  previewLanguage: com.example.model.KeyboardLanguage,
+  showInlinePreview: Boolean,
+  viewModel: StudioViewModel,
+  onOpenImeSettings: () -> Unit,
+  onOpenImePicker: () -> Unit,
+  onToggleOneHanded: () -> Unit,
+  onSwapOneHandedSide: () -> Unit,
+) {
+  when (activeTab) {
+    StudioTab.STUDIO ->
+      StudioHomeTab(
+        settings = settings,
+        imeStatus = imeStatus,
+        sandboxText = sandboxText,
+        previewLanguage = previewLanguage,
+        sandboxSink = viewModel.sandboxSink,
+        showInlinePreview = showInlinePreview,
+        onOpenImeSettings = onOpenImeSettings,
+        onOpenImePicker = onOpenImePicker,
+        onApplyProfile = viewModel::applyProfile,
+        onSandboxTextChange = viewModel::updateSandboxText,
+        onClearSandbox = viewModel::clearSandbox,
+        onLanguageChange = viewModel::setPreviewLanguage,
+        onToggleOneHanded = onToggleOneHanded,
+        onSwapOneHandedSide = onSwapOneHandedSide,
+        onNavigateToPalette = { viewModel.selectTab(StudioTab.PALETTE) },
+      )
+
+    StudioTab.PALETTE ->
+      PaletteStyleTab(
+        settings = settings,
+        onSetDynamicColor = viewModel::setUseDynamicColor,
+        onSelectPalette = viewModel::selectPalettePreset,
+        onSetThemeMode = viewModel::setThemeMode,
+        onSetSurfaceStyle = viewModel::setKeySurfaceStyle,
+        onSetFontFamily = viewModel::setKeyFontFamily,
+      )
+
+    StudioTab.GEOMETRY ->
+      GeometryTab(
+        settings = settings,
+        onSetHeightScale = viewModel::setHeightScale,
+        onSetCornerRadius = viewModel::setCornerRadius,
+        onSetHorizontalGap = viewModel::setHorizontalGap,
+        onSetVerticalGap = viewModel::setVerticalGap,
+        onSetFontSize = viewModel::setFontSize,
+        onSetBottomPadding = viewModel::setBottomPadding,
+        onSetOneHandedMode = viewModel::setOneHandedMode,
+        onSetKeyShadow = viewModel::setShowKeyShadow,
+      )
+
+    StudioTab.TYPING ->
+      TypingHapticsTab(
+        settings = settings,
+        onSetDefaultLanguage = viewModel::setDefaultLanguage,
+        onSetShowNumberRow = viewModel::setShowNumberRow,
+        onSetShowKeyHints = viewModel::setShowKeyHints,
+        onSetShowKeyPopup = viewModel::setShowKeyPopup,
+        onSetShowToolbar = viewModel::setShowToolbar,
+        onSetHapticEnabled = viewModel::setHapticEnabled,
+        onSetHapticDuration = viewModel::setHapticDuration,
+        onSetSoundEnabled = viewModel::setSoundEnabled,
+        onSetSpaceCursorControl = viewModel::setSpaceCursorControl,
+        onSetAutoCapitalize = viewModel::setAutoCapitalize,
+        onSetDoubleSpacePeriod = viewModel::setDoubleSpacePeriod,
+        onSetLongPressDelay = viewModel::setLongPressDelay,
+        onResetDefaults = viewModel::resetDefaults,
+      )
+  }
+}
+
+private fun tabIcon(tab: StudioTab, selected: Boolean): ImageVector =
+  when (tab) {
+    StudioTab.STUDIO -> if (selected) Icons.Rounded.Dashboard else Icons.Outlined.Dashboard
+    StudioTab.PALETTE -> if (selected) Icons.Rounded.Palette else Icons.Outlined.Palette
+    StudioTab.GEOMETRY -> if (selected) Icons.Rounded.AspectRatio else Icons.Outlined.AspectRatio
+    StudioTab.TYPING -> if (selected) Icons.Rounded.Keyboard else Icons.Outlined.Keyboard
+  }

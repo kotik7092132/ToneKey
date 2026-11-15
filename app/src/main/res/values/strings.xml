@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">ToneKey</string>
+    <string name="ime_service_name">ToneKey Material You</string>
+    <string name="subtype_russian">Русский (ЙЦУКЕН)</string>
+    <string name="subtype_english">English (QWERTY)</string>
+
+    <string name="nav_studio">Студия</string>
+    <string name="nav_palette">Палитра</string>
+    <string name="nav_geometry">Форма</string>
+    <string name="nav_typing">Ввод</string>
+
+    <string name="setup_status_title">Подключение клавиатуры</string>
+    <string name="setup_step_enable">1. Включить в настройках</string>
+    <string name="setup_step_select">2. Выбрать ToneKey</string>
+    <string name="setup_ready_badge">Активна в системе</string>
+    <string name="setup_enabled_badge">Включена, выберите активной</string>
+    <string name="setup_pending_badge">Требуется активация</string>
+
+    <string name="preview_sandbox_label">Живая песочница (жмите на клавиши)</string>
+    <string name="preview_sandbox_placeholder">Наберите текст с превью или системной клавиатурой…</string>
+    <string name="preview_clear">Очистить</string>
+    <string name="reset_defaults">Сбросить настройки</string>
+    <string name="reset_confirmed">Настройки сброшены к стандартным</string>
+
+    <string name="key_space_ru">Русский</string>
+    <string name="key_space_en">English</string>
+    <string name="cd_shift">Регистр</string>
+    <string name="cd_backspace">Удалить</string>
+    <string name="cd_enter">Ввод</string>
+    <string name="cd_language">Сменить язык</string>
+    <string name="cd_emoji">Эмодзи</string>
+    <string name="cd_clipboard">Буфер обмена</string>
+    <string name="cd_one_handed">Режим одной руки</string>
+    <string name="cd_settings">Настройки клавиатуры</string>
+    <string name="cd_hero_banner">Абстрактная иллюстрация клавиш Material You</string>
+</resources>
