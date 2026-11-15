@@ -1,3 +1,4 @@
+<img width="300" height="600" alt="Screenshot_20261115_080305" src="https://github.com/user-attachments/assets/6b14c6fd-6a0c-44e0-a367-c0d17e007446" />
  ToneKey ⌨️✨
 
 A custom, beautifully designed Android keyboard built with Jetpack Compose. ToneKey focuses on providing a unique, interactive typing experience with a stunning Material You aesthetic.
