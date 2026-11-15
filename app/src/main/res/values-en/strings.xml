@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">ToneKey</string>
+    <string name="ime_service_name">ToneKey Material You</string>
+    <string name="subtype_russian">Russian (ЙЦУКЕН)</string>
+    <string name="subtype_english">English (QWERTY)</string>
+</resources>
