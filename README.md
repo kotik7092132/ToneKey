@@ -1,4 +1,4 @@
-<img width="600" height="300" alt="Screenshot_20261115_050920" src="https://github.com/user-attachments/assets/1e9c9918-748e-4668-849c-7b1575021b55" />
+<img width="300" height="600" alt="Screenshot_20261115_050920" src="https://github.com/user-attachments/assets/1e9c9918-748e-4668-849c-7b1575021b55" />
 
 
 ToneKey ⌨️✨
